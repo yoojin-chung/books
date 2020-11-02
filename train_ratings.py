@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 30 10:45:06 2020
+Book recommender system.
 
+Created on Fri Oct 30 10:45:06 2020
 @author: yooji
 """
 
@@ -10,27 +11,7 @@ import numpy as np
 import seaborn as sns
 import pickle
 from scipy.optimize import minimize
-
-
-def cofiCostFunc(params, Y, R, num_users, num_movies, num_features, lam):
-    """Compute cost and gradient for collaborative filtering."""
-    X = params[:num_movies*num_features].reshape(num_movies, num_features)
-    Theta = params[num_movies*num_features:].reshape(num_users, num_features)
-
-    J = np.sum((np.dot(X, Theta.T)*R - Y)**2)/2 +\
-        lam/2*(np.sum(Theta**2) + np.sum(X**2))
-
-    X_grad = (X.dot(Theta.T)*R-Y).dot(Theta) + lam*X
-    Theta_grad = (X.dot(Theta.T)*R-Y).T.dot(X) + lam*Theta
-    new_params = np.hstack([X_grad.flatten(), Theta_grad.flatten()])
-    return J, new_params
-
-
-def normRatings(Y, R):
-    """Normalize ratings."""
-    Ymean = np.sum(Y, axis=1)/np.sum(R, axis=1)
-    Ynorm = Y-Ymean[:, None]*R
-    return Ynorm, Ymean
+import reco
 
 
 # %% Load data
@@ -66,7 +47,7 @@ train_mat = np.array(pivoted_train, dtype='float16')
 Y = train_mat
 R = Y!=0
 
-Ynorm, Ymean = normRatings(Y, R)
+Ynorm, Ymean = reco.normRatings(Y, R)
 num_movies, num_users = Y.shape
 num_features = 3
 
@@ -79,7 +60,7 @@ X.shape
 num_movies, num_users
 
 # %%
-theta = minimize(cofiCostFunc,
+theta = minimize(reco.cofiCostFunc,
                  x0=init_params,
                  args=(Ynorm, R, num_users, num_movies, num_features, lam),
                  method='TNC',
